@@ -56,4 +56,4 @@ for i in range(50):
         threading.Thread(target=female, args=(femaleCounter,)).start()
     else:
         maleCounter += 1
-        threading.Thread(target=female, args=(maleCounter,)).start()
+        threading.Thread(target=male, args=(maleCounter,)).start()
