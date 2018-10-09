@@ -4,40 +4,47 @@ import queue
 import time
 
 bufferLock = threading.Semaphore()
-items = threading.Semaphore()
+items = threading.Semaphore(0)
 buffer = queue.Queue()
 
 def produce(tokens):
     for token in tokens:
-        # time.sleep(1) TODO: what
         bufferLock.acquire()
         print("Placing item number ", token)
         buffer.put(token)
         bufferLock.release()
         items.release()
-#TODO: don't join this one?
+
 def consume(last):
-    while(True):
+    for i in range(last):
         items.acquire()
         bufferLock.acquire()
-        token = buffer.get()
-        print("Got item number ", token)
+        print("Got item number ", buffer.get())
         bufferLock.release()
-        items.release()
-        if(token == last):
-            break
 
-tokens = [i for i in range(20)]
+startTime = time.clock()
 
-producer = threading.Thread(target=produce, args=(tokens,))
-consumer = threading.Thread(target=consume, args=(len(tokens) - 1,))
+tokens = [i for i in range(10000)]
 
-print("Starting producer thread")
-producer.start()
-print("Starting consumer thread")
-consumer.start()
+producer1 = threading.Thread(target=produce, args=(tokens,))
+producer2 = threading.Thread(target=produce, args=(tokens,))
+consumer1 = threading.Thread(target=consume, args=(int(len(tokens)/2,)))
+consumer2 = threading.Thread(target=consume, args=(int(len(tokens)/2,)))
+consumer3 = threading.Thread(target=consume, args=(int(len(tokens)/2,)))
+consumer4 = threading.Thread(target=consume, args=(int(len(tokens)/2,)))
 
-producer.join()
-consumer.join()
+producer1.start()
+producer2.start()
+consumer1.start()
+consumer2.start()
+consumer3.start()
+consumer4.start()
 
-print("Done!")
+producer1.join()
+producer2.join()
+consumer1.join()
+consumer2.join()
+consumer3.join()
+consumer4.join()
+
+print("Total runtime:", time.clock() - startTime)

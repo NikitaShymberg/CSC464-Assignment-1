@@ -2,9 +2,10 @@ package main
 
 import (
 	"fmt"
+	"time"
 )
 
-var buffer = make(chan int)
+var buffer = make(chan int, 10000)
 var done = make(chan bool)
 
 func producer(tokens int) {
@@ -22,16 +23,18 @@ func consumer(tokens int) {
 }
 
 func main() {
-	go producer(100)
-	go producer(100)
-	go consumer(50)
-	go consumer(50)
-	go consumer(50)
-	go consumer(50)
+	start := time.Now()
+	go producer(10000)
+	go producer(10000)
+	go consumer(5000)
+	go consumer(5000)
+	go consumer(5000)
+	go consumer(5000)
 	<-done
 	<-done
 	<-done
 	<-done
 	<-done
 	<-done
+	fmt.Printf("Total runtime: %s\n", time.Since(start))
 }
