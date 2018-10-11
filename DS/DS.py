@@ -9,7 +9,7 @@ M = 10
 
 def cook():
     servings = 0
-    while True:
+    for i in range(30):
         emptyPot.acquire()
         # Fill up the pot
         for i in range(M):
@@ -22,7 +22,7 @@ def cook():
 
 def savage():
     food = -1
-    while True:
+    for i in range(10):
         mutex.acquire()
         if len(pot) == 0:
             emptyPot.release()
@@ -30,8 +30,8 @@ def savage():
         food = pot.pop()
         mutex.release()
 
-        print("Eating : ", food)
-        sleep(0.5)
+        print("Eating : ", food, i)
+        sleep(0.2)
 
 chef = threading.Thread(target=cook)
 savages = []
@@ -47,4 +47,7 @@ print("Eating")
 for s in savages:
     s.start()
 
-chef.join()
+for s in savages:
+    s.join()
+
+# chef.join()
