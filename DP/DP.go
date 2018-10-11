@@ -28,29 +28,26 @@ func left(i int) int {
 	return i
 }
 
-// IF left and right not eating, I can eat and I block them BOTH
-// ELSE wait for them to finish eating
+var runTimes [5]time.Duration
 
-// Idea: after eating, if anyone beside me is hungry give them the fork
-// Only pick both forks up at the same time
-
-// Idea 27: just grab any free forks
-func getForks(i int) {
-	// if both my neighbours aren't eating pick up forks then grab them
-	// TODO: clean up - set eating correctly but it works?????????
-	if philosopherState[i] == "hungry" && philosopherState[left(i)] != "eating" && philosopherState[right(i)] != "eating" {
+func getLeftHandedForks(i int) {
+	if philosopherState[i] == "hungry" {
 		philosopherState[i] = "eating"
-		<-forkChannels[left(i)]
-		<-forkChannels[right(i)]
-	} else if philosopherState[i] == "hungry" && philosopherState[left(i)] != "eating" {
-		<-forkChannels[right(i)]
-		<-forkChannels[left(i)]
-	} else if philosopherState[i] == "hungry" && philosopherState[right(i)] != "eating" {
 		<-forkChannels[left(i)]
 		<-forkChannels[right(i)]
 	}
 	fmt.Printf("Philosopher %d is eating\n", i)
-	time.Sleep(time.Second)
+	time.Sleep(200 * time.Millisecond)
+}
+
+func getRightHandedForks(i int) {
+	if philosopherState[i] == "hungry" {
+		philosopherState[i] = "eating"
+		<-forkChannels[right(i)]
+		<-forkChannels[left(i)]
+	}
+	fmt.Printf("Philosopher %d is eating\n", i)
+	time.Sleep(200 * time.Millisecond)
 }
 
 func putForksDown(i int) {
@@ -60,15 +57,32 @@ func putForksDown(i int) {
 	fmt.Printf("Philosopher %d is thinking\n", i)
 }
 
-func philosopher(i int) {
-	for {
+func leftHandedPhilosopher(i int, done chan bool) {
+	startTime := time.Now()
+	for j := 0; j < 2; j++ {
 		if philosopherState[i] == "thinking" {
 			philosopherState[i] = "hungry"
 			fmt.Printf("Philosopher %d is hungry\n", i)
-			getForks(i)
+			getLeftHandedForks(i)
 			putForksDown(i)
 		}
 	}
+	runTimes[i] = time.Since(startTime)
+	done <- true
+}
+
+func rightHandedPhilosopher(i int, done chan bool) {
+	startTime := time.Now()
+	for j := 0; j < 2; j++ {
+		if philosopherState[i] == "thinking" {
+			philosopherState[i] = "hungry"
+			fmt.Printf("Philosopher %d is hungry\n", i)
+			getRightHandedForks(i)
+			putForksDown(i)
+		}
+	}
+	runTimes[i] = time.Since(startTime)
+	done <- true
 }
 
 func main() {
@@ -81,11 +95,20 @@ func main() {
 
 	done := make(chan bool)
 
-	go philosopher(0)
-	go philosopher(1)
-	go philosopher(2)
-	go philosopher(3)
-	go philosopher(4)
+	start := time.Now()
+
+	go leftHandedPhilosopher(0, done)
+	go leftHandedPhilosopher(1, done)
+	go leftHandedPhilosopher(2, done)
+	go leftHandedPhilosopher(3, done)
+	go rightHandedPhilosopher(4, done)
 
 	<-done
+	<-done
+	<-done
+	<-done
+	<-done
+
+	fmt.Printf("Total runtime: %s\n", time.Since(start))
+	fmt.Printf("%v\n", runTimes)
 }

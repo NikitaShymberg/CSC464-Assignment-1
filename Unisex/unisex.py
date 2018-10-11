@@ -1,6 +1,6 @@
 # NOTE: starvation can happen
 import threading
-from time import sleep
+from time import sleep, time
 from random import random
 
 class Lightswitch:
@@ -28,32 +28,50 @@ femaleSwitch = Lightswitch()
 maleMultiplex = threading.Semaphore(3)
 femaleMultiplex = threading.Semaphore(3)
 
-def female(i):
+def female(i, waitTimes):
+    startTime = time()
     femaleSwitch.lock(empty)
     femaleMultiplex.acquire()
-    print("Female : ", i)
     sleep(0.5)
+    print("Female : ", i)
+    waitTimes[i] = {"gender": "F", "time": time() - startTime}
     femaleMultiplex.release()
     femaleSwitch.unlock(empty)
 
-def male(i):
+def male(i, waitTimes):
+    startTime = time()
     maleSwitch.lock(empty)
     maleMultiplex.acquire()
     sleep(0.5)
     print("Male : ", i)
+    waitTimes[i] = {"gender": "M", "time": time() - startTime}
     maleMultiplex.release()
     maleSwitch.unlock(empty)
 
-maleCounter = 0
-femaleCounter = 0
+
+waitTimes = [{} for i in range(50)]
+threads = []
 
 for i in range(50):
-    sleep(0.2)
-    q = random() #TODO: wtf this is odd
+    q = random()
     if q > 0.5:
-        print(q)
-        femaleCounter += 1
-        threading.Thread(target=female, args=(femaleCounter,)).start()
+        threads.append(threading.Thread(target=female, args=(i, waitTimes,)))
     else:
-        maleCounter += 1
-        threading.Thread(target=male, args=(maleCounter,)).start()
+        threads.append(threading.Thread(target=male, args=(i, waitTimes,)))
+
+startTime = time()
+
+for t in threads:
+    t.start()
+
+for t in threads:
+    t.join()
+
+avgTimes = {"M": [], "F": []}
+
+for i in waitTimes:
+    avgTimes[i["gender"]].append(i["time"])
+
+print("Average waiting time for men:", sum(avgTimes["M"])/len(avgTimes["M"]))
+print("Average waiting time for women:", sum(avgTimes["F"])/len(avgTimes["F"]))
+print("Total runtime:", time() - startTime)

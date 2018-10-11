@@ -1,6 +1,6 @@
 # NOTE: starvation can happen
 import threading
-from time import sleep
+from time import sleep, time
 from random import random
 
 
@@ -32,36 +32,55 @@ femaleMultiplex = threading.Semaphore(3)
 turnstile = threading.Semaphore()
 
 
-def female(i):
-	turnstile.acquire()
-	femaleSwitch.lock(empty)
-	turnstile.release()
-	femaleMultiplex.acquire()
-	print("Female : ", i)
-	sleep(0.5)
-	femaleMultiplex.release()
-	femaleSwitch.unlock(empty)
+def female(i, waitTimes):
+    startTime = time()
+    turnstile.acquire()
+    femaleSwitch.lock(empty)
+    turnstile.release()
 
-def male(i):
-	turnstile.acquire()
-	maleSwitch.lock(empty)
-	turnstile.release()
-	maleMultiplex.acquire()
-	sleep(0.5)
-	print("Male : ", i)
-	maleMultiplex.release()
-	maleSwitch.unlock(empty)
+    femaleMultiplex.acquire()
+    sleep(0.5)
+    print("Female : ", i)
+    waitTimes[i] = {"gender": "F", "time": time() - startTime}
+    femaleMultiplex.release()
+    femaleSwitch.unlock(empty)
 
-maleCounter = 0
-femaleCounter = 0
+def male(i, waitTimes):
+    startTime = time()
+    turnstile.acquire()
+    maleSwitch.lock(empty)
+    turnstile.release()
+
+    maleMultiplex.acquire()
+    sleep(0.5)
+    print("Male : ", i)
+    waitTimes[i] = {"gender": "M", "time": time() - startTime}
+    maleMultiplex.release()
+    maleSwitch.unlock(empty)
+
+waitTimes = [{} for i in range(50)]
+threads = []
 
 for i in range(50):
-    sleep(0.2)
-    q = random() #TODO: wtf this is odd
+    q = random()
     if q > 0.5:
-        print(q)
-        femaleCounter += 1
-        threading.Thread(target=female, args=(femaleCounter,)).start()
+        threads.append(threading.Thread(target=female, args=(i, waitTimes)))
     else:
-        maleCounter += 1
-        threading.Thread(target=male, args=(maleCounter,)).start()
+        threads.append(threading.Thread(target=male, args=(i, waitTimes)))
+
+startTime = time()
+
+for t in threads:
+    t.start()
+
+for t in threads:
+    t.join()
+
+avgTimes = {"M": [], "F": []}
+
+for i in waitTimes:
+    avgTimes[i["gender"]].append(i["time"])
+
+print("Average waiting time for men:", sum(avgTimes["M"])/len(avgTimes["M"]))
+print("Average waiting time for women:", sum(avgTimes["F"])/len(avgTimes["F"]))
+print("Total runtime:", time() - startTime)
