@@ -5,37 +5,29 @@ This problem is similar to the classic producer consumer concurrency problem. Th
 
 TODO:!!! An example of a real world software problem where such a solution is applied to would be in TODO:!!!
 
-## TODO: Results (???)
+## Results
 
-### Regular solution
+In the section below the total runtime is shown followed by the total runtime of each thread.
 
-| Run number | Total Runtime (sec) | Fast thread wait time (sec) | Long thread wait time (sec)|
-|------------|---------------------|-----------------------------|----------------------------|
-| 1          | 8.560               | 2.440                       | 6.794                      |
-| 2          | 8.548               | 2.509                       | 6.708                      |
-| 3          | 8.567               | 1.764                       | 5.968                      |
-| 4          | 8.567               | 2.511                       | 6.720                      |
-| 5          | 8.543               | 2.755                       | 6.950                      |
-| MEAN       | 8.557               | 2.396                       | 6.628                      |
+### Go solution output
 
-### No starve solution
+```
+Total runtime: 2.436221188s
+[2.436187605s 2.436152088s 2.032253087s]
+```
 
-| Run number | Total Runtime (sec) | Fast thread wait time (sec) | Long thread wait time (sec)|
-|------------|---------------------|-----------------------------|----------------------------|
-| 1          | 14.11               | 7.367                       | 7.245                      |
-| 2          | 15.08               | 8.315                       | 8.004                      |
-| 3          | 14.08               | 7.065                       | 7.029                      |
-| 4          | 15.63               | 8.780                       | 6.911                      |
-| 5          | 15.13               | 8.990                       | 7.581                      |
-| MEAN       | 14.81               | 8.103                       | 7.354                      |
+### Python solution output (in seconds)
+
+```
+Total runtime: 2.0234687328338623
+[2.022498846054077, 2.0226809978485107, 2.0221598148345947]
+```
 
 ## Analysis
 
-### TODO: Performance (???)
+### Performance
 
-In the above tables, it is impossible to know whether the male or the female threads will need to wait longer, so without loss of generality, the slow wait time refers to the type of thread that needed to wait longer. There appears to be clear winner in terms of performance. In the no starve solution both types of threads have to wait _longer_ to use the bathroom on average. In the regular solution when a thread gets into a line with other threads of the opposite gender to use the bathroom, there is a 50% chance that the other threads in the bathroom have the same gender and the current thread would be able to enter straight away (or at most wait for one thread to exit if the bathroom is full). In the no starve solution however, if there are other threads of the opposite gender in line already, the current thread would need to wait for them to finish before being able to enter the bathroom.
-
-It is worth noting that the results in this experiment are a little skewed as all threads are being spawned at once. If the spawn times of threads were more staggered, then the average wait times in the no starve solution would be lower - likely in between the fast and slow wait times of the regular solution. Nevertheless, the slow and fast wait times of the no starve solution would be very similar, and in the regular solution much more different.
+Each thread had to wait 10 times for 0.2 seconds representing the consumption of the resource, so the python solution can be seen as very fast with all the boilerplate code taking up 0.02 seconds to run. The Go solution is quite a bit slower taking 0.4 seconds for all the boilerplate code to run. A likely cause for this is the disparity of the speeds of accessing a shared list vs copying data over channels. However this will only slow down the total runtime, not the average time that a thread has to wait for the resource to fill up. The Go solution fills up the pot upon taking away the last token, this means that threads do not have to wait for the pot to fill up while they are still consuming their tokens. Furthermore they are able to retrieve tokens from the pot as soon as one exists in it. In the python solution on the other hand, the pot is filled up only when a thread notices that it is empty. If the pot filling process is very slow in a real world application, this will have consequences on the performance. Additionally, the python threads need to wait until the pot is completely full before being able to access it. Nevertheless in this example the cost of Go channels outweighed those other considerations.
 
 ### Comprehensibility
 The comprehensibility of these two solutions is quite subjective and depends on the users familiarity with mutexes and Go channels. The lengths of the two types of functions are similar enough to not be relevant to the readability of the code. The python solution uses three separate synchronization objects whereas the Go one uses only two so it has the edge in that respect. The Go solution also uses one of its channels as the pot itself whereas the python solution needs a separate list for the pot. This can be considered more intuitive as the pot becomes the way for the two types of threads to communicate with each other without the necessity any other communication mechanisms. Personally I would consider the Go solution to be easier to understand, however this is not a concrete statement and might vary from person to person.
