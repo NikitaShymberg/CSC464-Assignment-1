@@ -12,6 +12,8 @@ var pot = make(chan int, M)
 var pokeCook = make(chan bool)
 var done = make(chan bool)
 
+var runTimes [3]time.Duration
+
 func cook() {
 	for {
 		for i := 0; i < M; i++ {
@@ -21,7 +23,8 @@ func cook() {
 	}
 }
 
-func savage() {
+func savage(index int) {
+	startTime := time.Now()
 	for i := 0; i < 10; i++ {
 		var food int
 		food = <-pot
@@ -31,15 +34,20 @@ func savage() {
 			pokeCook <- true
 		}
 	}
+	runTimes[index] = time.Since(startTime)
 	done <- true
 }
 
 func main() {
 	go cook()
-	go savage()
-	go savage()
-	go savage()
+
+	startTime := time.Now()
+	go savage(0)
+	go savage(1)
+	go savage(2)
 	<-done
 	<-done
 	<-done
+	fmt.Printf("Total runtime: %s\n", time.Since(startTime))
+	fmt.Printf("%v\n", runTimes)
 }
