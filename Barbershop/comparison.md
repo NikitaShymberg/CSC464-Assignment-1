@@ -7,5 +7,14 @@ An example of a real world software problem where such a solution is applied to 
 
 ## Results
 
+Regular barbershop
+```
+Total runtime: 3.288873354s
+```
+
+Busy wait barbershop
+```
+Total runtime: 4m49.48313935s
+```
 
 ## Analysis
