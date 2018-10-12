@@ -16,7 +16,6 @@ var fullMutex = sync.Mutex{}
 var completedHaircuts [initialCustomerLimit]bool
 
 var queuedCustomers = make(chan int, maxQueueLen)
-var pokeCook = make(chan bool)
 var done = make(chan bool)
 
 func giveHairCut(i int) {

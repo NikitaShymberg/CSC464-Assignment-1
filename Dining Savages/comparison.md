@@ -1,9 +1,9 @@
-# Producer and consumer problem
+# Dining savages problem
 
 ## Description and relevance to code bases
 This problem is similar to the classic producer consumer concurrency problem. There is one cook that puts resources into the pot for the savages to consume. When the pot is empty a savage must wake the cook up and ask him to put more resources into the pot.
 
-TODO:!!! An example of a real world software problem where such a solution is applied to would be in TODO:!!!
+An example of a real world software problem where such a solution is applied to could be in a distributed system used for data processing. This could allow the cook to dynamically allocate processing work to the different savage computers. Instead of having to initially split up all of the work between all possible computers, the cook assigns a certain number to each, and when each computer finishes the assigned task it lets the cook know that it is done and can get assigned more processing.
 
 ## Results
 
